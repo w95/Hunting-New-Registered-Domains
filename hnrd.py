@@ -50,7 +50,7 @@ def DNS_Records(domain):
     rrtypes = ['A', 'MX', 'NS', 'AAAA', 'SOA']
     for r in rrtypes:
         try:
-            Aanswer = resolver.query(domain, r)
+            Aanswer = resolver.resolve(domain, r)
             for answer in Aanswer:
                 if r == 'A':
                     A.append(answer.address)
@@ -336,8 +336,11 @@ def VTDomainReport(domain):
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:52.0) Gecko/20100101 Firefox/52.0'}
     response = requests.get(
         'https://www.virustotal.com/vtapi/v2/domain/report', params=parameters, headers=headers)
-    response_dict = response.json()
-    return response_dict
+    try:
+        response_dict = response.json()
+        return response_dict
+    except (json.JSONDecodeError, ValueError):
+        return {'response_code': 0, 'verbose_msg': 'Invalid API response (API key may be invalid or rate limited)'}
 
 
 def getVTDomainReport():
@@ -420,7 +423,7 @@ def quad9(domain):
     resolver.lifetime = 1
 
     try:
-        Aanswers = resolver.query(domain, 'A')
+        Aanswers = resolver.resolve(domain, 'A')
     except dns.resolver.NXDOMAIN:
         return "Blocked"
     except dns.resolver.NoAnswer:
